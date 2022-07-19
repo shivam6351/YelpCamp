@@ -18,7 +18,6 @@ const { campgroundSchema, reviewSchema } = require('./schemas.js');
 const Review = require('./models/review');
 const userRoutes = require('./routes/users')
 const campgroundRoutes = require('./routes/campgrounds')
-mongoose.connect('mongodb://localhost:27017/yelp-camp');
 const reviewRoutes = require('./routes/reviews')
 const flash = require('connect-flash');
 const session = require('express-session')
@@ -26,10 +25,11 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local')
 const User = require('./models/user');
 const user = require('./models/user');
+const mongoSanitize = require('express-mongo-sanitize')
+const MongoDBStore = require('connect-mongodb-session')(session);
 
-
-
-
+const dbUrl = 'mongodb://localhost:27017/yelp-camp';
+mongoose.connect(dbUrl);
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
 db.once("open", () => {
@@ -41,12 +41,35 @@ app.use(express.urlencoded({ extended: true }))
 app.use(methodOverride('_method'))
 app.use(express.static(path.join(__dirname, 'public')))
 
+
+
+app.engine('ejs', ejsMate);
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+app.use(mongoSanitize({
+    replaceWith: '_'
+}))
+
+const store = new MongoDBStore({
+    url: dbUrl,
+    secret: 'thisshouldbeabettersecret',
+    touchAfter: 24 * 60 * 60
+});
+
+store.on("error", function (e) {
+    console, log("SESSION STORE ERROR", e);
+})
+
 const sessionConfig = {
+    store,
+    name: 'session',
     secret: 'thisshouldbeabettersecret',
     resave: false,
     saveUninitialized: true,
     cookie: {
         httpOnly: true,
+        //secure: true,
         expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
         maxAge: 1000 * 60 * 60 * 24 * 7
     }
@@ -55,10 +78,6 @@ const sessionConfig = {
 
 app.use(session(sessionConfig))
 app.use(flash());
-
-app.engine('ejs', ejsMate);
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
 
 
 app.use(passport.initialize())
