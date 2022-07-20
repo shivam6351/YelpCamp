@@ -27,8 +27,9 @@ const User = require('./models/user');
 const user = require('./models/user');
 const mongoSanitize = require('express-mongo-sanitize')
 const MongoDBStore = require('connect-mongodb-session')(session);
-
-const dbUrl = 'mongodb://localhost:27017/yelp-camp';
+//const DBURL=process.env.DB_URL;
+//'mongodb://localhost:27017/yelp-camp'
+const dbUrl = process.env.DB_URL || 'mongodb://localhost:27017/yelp-camp';
 mongoose.connect(dbUrl);
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
@@ -51,9 +52,11 @@ app.use(mongoSanitize({
     replaceWith: '_'
 }))
 
+const secret = process.env.SECRET || 'thisshouldbeabettersecret';
+
 const store = new MongoDBStore({
     url: dbUrl,
-    secret: 'thisshouldbeabettersecret',
+    secret,
     touchAfter: 24 * 60 * 60
 });
 
@@ -64,7 +67,7 @@ store.on("error", function (e) {
 const sessionConfig = {
     store,
     name: 'session',
-    secret: 'thisshouldbeabettersecret',
+    secret,
     resave: false,
     saveUninitialized: true,
     cookie: {
