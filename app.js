@@ -60,12 +60,9 @@ const store = new MongoDBStore({
     touchAfter: 24 * 60 * 60
 });
 
-store.on("error", function (e) {
-    console.log("SESSION STORE ERROR", e);
-})
+
 
 const sessionConfig = {
-    store,
     name: 'session',
     secret,
     resave: false,
