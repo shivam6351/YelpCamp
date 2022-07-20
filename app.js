@@ -61,7 +61,7 @@ const store = new MongoDBStore({
 });
 
 store.on("error", function (e) {
-    console, log("SESSION STORE ERROR", e);
+    console.log("SESSION STORE ERROR", e);
 })
 
 const sessionConfig = {
